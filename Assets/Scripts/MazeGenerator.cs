@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -48,10 +49,11 @@ public class MazeGenerator : MonoBehaviour
 
         //ClearWallsBetween(tiles[2, 2], tiles[2, 3]);
 
-        TileLogicalInstance t1 = tiles[4, 3];
+        TileLogicalInstance t1 = tiles[5, 3];
         TileLogicalInstance t2 = tiles[4, 2];
         VisitTile(t1);
         VisitTile(t2);
+        
         ClearWallsBetween(t1, t2);
         VisitTile(tiles[1, 0]);
     }
@@ -165,7 +167,7 @@ public class MazeGenerator : MonoBehaviour
                     int px = prevCell.coord.x;
                     int py = prevCell.coord.y;
 
-                    bool rigaAttualeDisp = (y % 2) == 0;
+                    bool rigaAttualeDisp = (y % 2) == 1;
 
                     
                     if (py == y + 2 && px == x) //prec sopra
@@ -182,13 +184,15 @@ public class MazeGenerator : MonoBehaviour
                     // diagonali
                     else if (py == y + 1) //prec è sopra
                     {
+                        Debug.Log("prec è sopra");
+
                         if ((px == x + 1 && rigaAttualeDisp) || (px == x && !rigaAttualeDisp)) //prec è a dx
                         {
                             DeactivateWall(currentCell, 2);
                             DeactivateWall(prevCell, 5);
                             Debug.Log("prec è sopra a dx");
                         }
-                        else if ((px == x - 1 && rigaAttualeDisp) || (px == x && !rigaAttualeDisp)) //prec è a sx
+                        if ((px == x - 1 && rigaAttualeDisp) || (px == x && !rigaAttualeDisp)) //prec è a sx
                         {
                             DeactivateWall(currentCell, 4);
                             DeactivateWall(prevCell, 1);
@@ -197,7 +201,9 @@ public class MazeGenerator : MonoBehaviour
                     }
                     else if (py == y - 1) //prec è sotto
                     {
-                        if ((px == x + 1 && rigaAttualeDisp) || (px == x && !rigaAttualeDisp)) //prec è a dx
+                        Debug.Log("prec è sotto");
+
+                        if ((px == x + 1 && rigaAttualeDisp) || (px == x && rigaAttualeDisp)) //prec è a dx
                         {
                             DeactivateWall(currentCell, 1);
                             DeactivateWall(prevCell, 4);
