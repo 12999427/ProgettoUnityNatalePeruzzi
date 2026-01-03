@@ -34,10 +34,10 @@ public class MazeGenerator : MonoBehaviour
     protected System.Random random;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public IEnumerator Start()
     {
         random = new();
-        int width = 10; int height = 10; MazeGenAlgorithm alg = MazeGenAlgorithm.RecursiveBacktracking; MazeType type = MazeType.Hex;
+        /*int width = 10; int height = 10; MazeGenAlgorithm alg = MazeGenAlgorithm.RecursiveBacktracking; MazeType type = MazeType.Hex;
 
         tiles = new TileLogicalInstance[width, height];
         tilesGrid = new GameObject[width, height];
@@ -49,13 +49,17 @@ public class MazeGenerator : MonoBehaviour
 
         //ClearWallsBetween(tiles[2, 2], tiles[2, 3]);
 
-        TileLogicalInstance t1 = tiles[5, 3];
-        TileLogicalInstance t2 = tiles[4, 2];
-        VisitTile(t1);
-        VisitTile(t2);
+        TileLogicalInstance t1 = tiles[4, 4];
         
-        ClearWallsBetween(t1, t2);
-        VisitTile(tiles[1, 0]);
+        foreach (var c in GetNearUnvisitedCells(t1).ToArray())
+        {
+            Debug.Log($"Coord {c.coord.x}, {c.coord.y}");
+            VisitTile(c);
+        }
+
+        */
+
+        yield return Generate(10, 10, MazeGenAlgorithm.RecursiveBacktracking, MazeType.Hex);
     }
 
     public IEnumerator Generate(int width, int height, MazeGenAlgorithm alg, MazeType type)
@@ -68,8 +72,8 @@ public class MazeGenerator : MonoBehaviour
 
         SpawnAndInstantiate(width, height, type);
 
-        //yield return RecursiveGenerationStep(tiles[0, 0], null);
-        yield return this;
+        yield return RecursiveGenerationStep(tiles[0, 0], null);
+        //yield return this;
 
     }
 
@@ -87,9 +91,10 @@ public class MazeGenerator : MonoBehaviour
 
             ClearWallsBetween(current, prev);
 
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.05f);
 
             TileLogicalInstance next;
+
             do
             {
                 next = GetRandomNearUnvisitedCell(current);
@@ -112,7 +117,7 @@ public class MazeGenerator : MonoBehaviour
                 {
                     for (int x = 0; x < width; x++)
                     {
-                        tilesGrid[x, y] = Instantiate(TilePrefab, new Vector3(-(x), 0, y), Quaternion.identity);
+                        tilesGrid[x, y] = Instantiate(TilePrefab, new Vector3((x), 0, (y)), Quaternion.identity);
                         tiles[x, y] = new TileLogicalInstance(4, new Vector2Int(x, y));
                     }
                 }
@@ -122,7 +127,7 @@ public class MazeGenerator : MonoBehaviour
                 {
                     for (int x = 0; x < width; x++)
                     {
-                        tilesGrid[x, y] = Instantiate(TilePrefab, new Vector3(-(x*3f + (y%2==0 ? 0f : 3f/2f)), 0, y*Mathf.Sqrt(3)/2), Quaternion.identity);
+                        tilesGrid[x, y] = Instantiate(TilePrefab, new Vector3((x*3f + (y%2==0 ? 0f : 3f/2f)), 0, (y*Mathf.Sqrt(3)/2)), Quaternion.identity);
                         tiles[x, y] = new TileLogicalInstance(6, new Vector2Int(x, y));
                     }
                 }
@@ -182,38 +187,38 @@ public class MazeGenerator : MonoBehaviour
                     }
 
                     // diagonali
-                    else if (py == y + 1) //prec è sopra
+                    else if (py == y + 1) //prec ï¿½ sopra
                     {
-                        Debug.Log("prec è sopra");
+                        //Debug.Log("prec ï¿½ sopra");
 
-                        if ((px == x + 1 && rigaAttualeDisp) || (px == x && !rigaAttualeDisp)) //prec è a dx
+                        if ((px == x + 1 && rigaAttualeDisp) || (px == x && !rigaAttualeDisp)) //prec ï¿½ a dx
                         {
                             DeactivateWall(currentCell, 2);
                             DeactivateWall(prevCell, 5);
-                            Debug.Log("prec è sopra a dx");
+                            //Debug.Log("prec ï¿½ sopra a dx");
                         }
-                        if ((px == x - 1 && rigaAttualeDisp) || (px == x && !rigaAttualeDisp)) //prec è a sx
+                        if ((px == x - 1 && !rigaAttualeDisp) || (px == x && rigaAttualeDisp)) //prec ï¿½ a sx
                         {
                             DeactivateWall(currentCell, 4);
                             DeactivateWall(prevCell, 1);
-                            Debug.Log("prec è sopra a sx");
+                            //Debug.Log("prec ï¿½ sopra a sx");
                         }
                     }
-                    else if (py == y - 1) //prec è sotto
+                    else if (py == y - 1) //prec ï¿½ sotto
                     {
-                        Debug.Log("prec è sotto");
+                        //Debug.Log("prec ï¿½ sotto");
 
-                        if ((px == x + 1 && rigaAttualeDisp) || (px == x && rigaAttualeDisp)) //prec è a dx
+                        if ((px == x + 1 && rigaAttualeDisp) || (px == x && !rigaAttualeDisp)) //prec ï¿½ a dx
                         {
                             DeactivateWall(currentCell, 1);
                             DeactivateWall(prevCell, 4);
-                            Debug.Log("prec è sotto a dx");
+                            //Debug.Log("prec ï¿½ sotto a dx");
                         }
-                        if ((px == x - 1 && rigaAttualeDisp) || (px == x && !rigaAttualeDisp)) //prec è a sx
+                        if ((px == x - 1 && !rigaAttualeDisp) || (px == x && rigaAttualeDisp)) //prec ï¿½ a sx
                         {
                             DeactivateWall(currentCell, 5);
                             DeactivateWall(prevCell, 2);
-                            Debug.Log("prec è sotto a sx");
+                            //Debug.Log("prec ï¿½ sotto a sx");
                         }
                     }
                 }
@@ -248,19 +253,19 @@ public class MazeGenerator : MonoBehaviour
                     int y = current.coord.y;
                     bool oddRow = (y % 2) == 1;
 
-                    // sopra / sotto
+                    // diagonali 1
                     if (y < size.y - 1)
                         yield return tiles[x, y + 1];
                     if (y > 0)
                         yield return tiles[x, y - 1];
 
-                    // sinistra / destra
-                    if (x > 0)
-                        yield return tiles[x - 1, y];
-                    if (x < size.x - 1)
-                        yield return tiles[x + 1, y];
+                    // su giu
+                    if (y > 1)
+                        yield return tiles[x, y - 2];
+                    if (y < (size.y - 2))
+                        yield return tiles[x, y + 2];
 
-                    // diagonali
+                    // diagonali 2
                     if (oddRow)
                     {
                         if (x < size.x - 1 && y < size.y - 1)
