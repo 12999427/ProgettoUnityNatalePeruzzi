@@ -14,6 +14,9 @@ public class PlayerBehavior_RB : MonoBehaviour
     CapsuleCollider capsuleCollider;
     Quaternion camera3Drotation;
 
+    protected AudioSource footstepAudioSource;
+    [SerializeField] public AudioClip[] footstepClip;
+
     private float yaw;
     private float pitch;
 
@@ -35,6 +38,8 @@ public class PlayerBehavior_RB : MonoBehaviour
         playerCamera = gameObject.GetComponentInChildren<Camera>();
 
         capsuleCollider = GetComponent<CapsuleCollider>();
+
+        footstepAudioSource = GetComponent<AudioSource>();
 
         playerInput.CharacterControls.Move.performed += MovementInputChanged;
         playerInput.CharacterControls.Move.started += MovementInputChanged;
@@ -75,9 +80,7 @@ public class PlayerBehavior_RB : MonoBehaviour
 
     public void OnFootstep()
     {
-        // This function can be called from animation events
-        Debug.Log("Footstep sound played");
-        // Here you can add code to play footstep sounds
+        footstepAudioSource.PlayOneShot(footstepClip[Random.Range(0, footstepClip.Length)]);
     }
 
     void Start()
@@ -95,7 +98,7 @@ public class PlayerBehavior_RB : MonoBehaviour
 void HandleCamera()
 {
     float radius = 2f;    // distanza camera dal player
-    float height = 0.8f;  // altezza camera rispetto al player
+    float height = 0f;  // altezza camera rispetto al player
 
     // 1. Aggiorna yaw e pitch dai controlli
     yaw += currentCameraInput.x * cameraSens.x;
@@ -105,9 +108,21 @@ void HandleCamera()
     // Trova la direzione (Quaternion) della camera usando yaw e pitch
     Quaternion rotation = Quaternion.Euler(pitch, yaw, 0f);
 
-    //Posiziona la camera rispetto al player
+    //Posiziona la camera rispetto al player (desiderata)
     Vector3 offset = rotation * new Vector3(0f, 0f, -radius); //Spostamento di raggio, nella corretta direzione
     Vector3 targetPosition = transform.position + Vector3.up * height + offset; //Spostamento di altezza + offset
+
+    //Controllo collisioni (spring arm)
+    Vector3 playerCenter = transform.position + Vector3.up * (height); // punto di partenza del ray
+    Vector3 direction = targetPosition - playerCenter;
+    float distance = direction.magnitude;
+
+    if (Physics.Raycast(playerCenter, direction.normalized, out RaycastHit hit, distance))
+    {
+        // sposta la camera leggermente verso il giocatore rispetto al punto di contatto
+        targetPosition = hit.point - direction.normalized * 0.1f; // 0.1f offset per evitare clipping
+    }
+
     playerCamera.transform.position = targetPosition;
 
     //Rotazione
@@ -120,16 +135,38 @@ void HandleCamera()
     void HandleMovement()
     {
         int falling = getFalling();
+        float speed = currentIsRunning ? runSpeed : walkSpeed;
+        Vector3 MoveDir= playerCamera.transform.TransformDirection(new Vector3(currentInputVector.x, 0f, currentInputVector.y));
+        MoveDir.y = 0f;
+        MoveDir.Normalize();
+        Vector3 MoveVector = MoveDir * speed;
 
-        if (falling == 0)
+        if (falling == 0) //a terra
+        {
             rb.linearDamping = 1f;
+            rb.linearVelocity = new Vector3 (MoveVector.x, rb.linearVelocity.y, MoveVector.z);
+        }
         else
+        {
             rb.linearDamping = 0f;
 
-        float speed = currentIsRunning ? runSpeed : walkSpeed;
-        Vector3 MoveVector = playerCamera.transform.TransformDirection(new Vector3(currentInputVector.x, 0f, currentInputVector.y)) * speed;
-        rb.linearVelocity = new Vector3 (MoveVector.x, rb.linearVelocity.y, MoveVector.z);
-
+            if (currentIsMoving)
+            {
+                // raycast per controllare se c'è il muro nella direzione di movimento. se si applicasse
+                // indipendentemente il movimento, il rigidbody potrebbe "attaccarsi" al muro
+                
+                float rayDistance = MoveVector.magnitude * Time.fixedDeltaTime + 0.03f; // un piccolo margine
+                Vector3 rayOrigin = transform.position + MoveDir * capsuleCollider.radius;
+                if (!Physics.Raycast(rayOrigin, MoveDir, rayDistance))
+                {
+                    rb.linearVelocity = new Vector3 (MoveVector.x, rb.linearVelocity.y, MoveVector.z);
+                }
+                else
+                {
+                    rb.linearVelocity = new Vector3 (MoveVector.x*-1, rb.linearVelocity.y, MoveVector.z*-1);
+                }
+            }
+        }
     }
 
     private void FixedUpdate()
@@ -180,7 +217,9 @@ void HandleCamera()
         float rayLength = capsuleCollider.height / 2f + 0.1f;
 
         //Ray verso il basso
-        bool hasGround = Physics.Raycast(center, Vector3.down, rayLength, Physics.DefaultRaycastLayers);
+        RaycastHit hitInfo;
+        // 0.35f è più o meno il punto della semisfera del capsule collider in cui inizia a cadere
+        bool hasGround = Physics.SphereCast(center, GetComponent<CapsuleCollider>().radius * 0.35f, Vector3.down, out hitInfo, rayLength, Physics.DefaultRaycastLayers);
 
         if (hasGround)
             return 0; // Non cade

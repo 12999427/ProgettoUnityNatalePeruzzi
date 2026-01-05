@@ -1,12 +1,12 @@
 using UnityEngine;
 
-public class TreasureBehavior : MonoBehaviour
+public class HideWallBehavior : MonoBehaviour
 {
     public I_PlayerInteractions playerInteractions;
 
     private void OnTriggerEnter(Collider other)
     {
-        playerInteractions.CollectibleTreasureInteraction(transform.parent.parent.gameObject);
+        playerInteractions.HideWallInteraction(transform.parent.parent.gameObject);
         Destroy(transform.parent.parent.gameObject);
     }
 }

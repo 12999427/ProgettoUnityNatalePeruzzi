@@ -44,7 +44,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3f0df73c78564f45aa12cbbb59fcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MazeGenerator
-  TilePrefab: {fileID: 0}
-  algorithm: 0
-  type: 0
-  size: {x: 0, y: 0}
+  TilePrefabSquared: {fileID: 2393648303632565371, guid: ab98eb33a2e1b4f16add76c2e87ecf60, type: 3}
+  TilePrefabHex: {fileID: 2393648303632565371, guid: 8aec7af66f3cb764d9cd4041bdd4cd66, type: 3}

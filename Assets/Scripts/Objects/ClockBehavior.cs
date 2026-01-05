@@ -1,12 +1,12 @@
 using UnityEngine;
 
-public class TreasureBehavior : MonoBehaviour
+public class ClockBehavior : MonoBehaviour
 {
     public I_PlayerInteractions playerInteractions;
 
     private void OnTriggerEnter(Collider other)
     {
-        playerInteractions.CollectibleTreasureInteraction(transform.parent.parent.gameObject);
+        playerInteractions.TimeBonusInteraction(transform.parent.parent.gameObject);
         Destroy(transform.parent.parent.gameObject);
     }
 }

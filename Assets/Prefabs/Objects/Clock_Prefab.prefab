@@ -108,6 +108,7 @@ GameObject:
   - component: {fileID: 352374516863067336}
   - component: {fileID: 55753289673816689}
   - component: {fileID: 5332032268114469195}
+  - component: {fileID: 4281453743228536984}
   m_Layer: 0
   m_Name: Box Volume
   m_TagString: Untagged
@@ -145,7 +146,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -168,6 +169,18 @@ MonoBehaviour:
   blendDistance: 5.01
   weight: 0.119
   sharedProfile: {fileID: 11400000, guid: 159ef34629eb94b028d1b7d882b09520, type: 2}
+--- !u!114 &4281453743228536984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7435125901750244503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56c4c7a3a4e50421d85866a442cff30c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!1001 &2980722320374319225
 PrefabInstance:
   m_ObjectHideFlags: 0
