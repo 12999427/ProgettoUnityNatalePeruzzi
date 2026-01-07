@@ -24,8 +24,9 @@ public class PlayerBehavior_RB : MonoBehaviour
     public float pitchMin = -70f;
     public float pitchMax = 80f;
 
-    [SerializeField] public float walkSpeed = 0.1f;
-    [SerializeField] public float runSpeed = 0.1f;
+    [SerializeField] public float walkSpeed = 3f;
+    [SerializeField] public float runSpeed = 6f;
+    [SerializeField] public float airSpeed = 3f;
 
 
     void Awake()
@@ -88,6 +89,8 @@ public class PlayerBehavior_RB : MonoBehaviour
         Vector3 angles = transform.eulerAngles;
         yaw = angles.y;
         pitch = angles.x;
+
+        playerCamera.fieldOfView = PlayerPrefs.GetFloat("FOV", 60f);
     }
     void Update()
     {
@@ -135,7 +138,7 @@ void HandleCamera()
     void HandleMovement()
     {
         int falling = getFalling();
-        float speed = currentIsRunning ? runSpeed : walkSpeed;
+        float speed = falling == 0 ? (currentIsRunning ? runSpeed : walkSpeed) : airSpeed;
         Vector3 MoveDir= playerCamera.transform.TransformDirection(new Vector3(currentInputVector.x, 0f, currentInputVector.y));
         MoveDir.y = 0f;
         MoveDir.Normalize();

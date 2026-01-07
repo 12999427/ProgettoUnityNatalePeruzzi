@@ -1,10 +1,8 @@
 using UnityEngine;
 
-public class ArrowBehavior : MonoBehaviour
+public class ArrowBehavior : BaseObjectBehavior
 {
-    public I_PlayerInteractions playerInteractions;
-
-    private void OnTriggerEnter(Collider other)
+    protected override void OnTriggerEnter(Collider other)
     {
         playerInteractions.ArrowBonusInteraction(transform.parent.parent.gameObject);
         Destroy(transform.parent.parent.gameObject);

@@ -915,7 +915,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7500324013810544990, guid: 52b240cf42d574442a6fa378e2424a39, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 20.54
+      value: -1.60117
       objectReference: {fileID: 0}
     - target: {fileID: 7500324013810544990, guid: 52b240cf42d574442a6fa378e2424a39, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1133,7 +1133,9 @@ MonoBehaviour:
   TimeBonusPrefab: {fileID: 5218431467772306670, guid: 8a2bb25f04b74470682da0765a0f0d37, type: 3}
   Canvas: {fileID: 1627850116}
   ArrowIndicatorPrefab: {fileID: 407718609613737780, guid: fc0177f541956451185ccce6cd7d8601, type: 3}
-  bonusCollectSound: {fileID: 8300000, guid: 2a4d5ff42ecb54c029434756e741230c, type: 3}
+  bonusCollectSound: {fileID: 8300000, guid: 0b0c153e94d5847518bb23dd49860372, type: 3}
+  currentLevel: -1
+  maxLevel: 4
 --- !u!82 &1656898763
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1143,7 +1145,7 @@ AudioSource:
   m_GameObject: {fileID: 1656898760}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 24300002, guid: b04459aad12b2474fbee9a4cd57430d1, type: 2}
+  OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1

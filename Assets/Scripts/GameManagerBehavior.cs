@@ -42,7 +42,7 @@ public class GameManagerBehavior : MonoBehaviour, I_PlayerInteractions
     [SerializeField] private GameObject Canvas;
     [SerializeField] private GameObject ArrowIndicatorPrefab;
 
-    protected AudioSource bonusAudioSource;
+    private AudioSource bonusAudioSource;
     [SerializeField] public AudioClip bonusCollectSound;
 
 
@@ -52,20 +52,26 @@ public class GameManagerBehavior : MonoBehaviour, I_PlayerInteractions
 
     Dictionary<TileLogicalInstance, GameObject> objects = new();
 
-    public int currentLevel = -1;
-    public int maxLevel = 5; //numero tot livelli
+    private int currentLevel = -1;
+    private int maxLevel = 6; //numero tot livelli
 
-    protected int numTesoriRaccolti = 0;
-    protected float startedTime;
-    protected float avaiableTime = 300f;
+    private int numTesoriRaccolti = 0;
+    private float startedTime;
+    private float avaiableTime;
 
-    protected LevelDescription[] levels = new LevelDescription[]
+    private bool isCustomLevel;
+    private bool isLevelEnded = false;
+
+
+
+    private LevelDescription[] levels = new LevelDescription[]
     {
-        new LevelDescription(5, 5, MazeType.Squared, 5, 4, 3, 2, 1),
-        new LevelDescription(7, 7, MazeType.Squared, 4, 4, 2, 2, 1),
-        new LevelDescription(12, 12, MazeType.Squared, 6, 5, 4, 3, 2),
-        new LevelDescription(8, 14, MazeType.Hex, 5, 5, 3, 3, 2),
-        new LevelDescription(12, 20, MazeType.Hex, 5, 4, 2, 2, 1),
+        new LevelDescription(5, 5, MazeType.Squared, 3, 1, 1, 3, 1),
+        new LevelDescription(4, 7, MazeType.Hex, 4, 3, 3, 3, 2),
+        new LevelDescription(9, 9, MazeType.Squared, 4, 4, 3, 4, 1),
+        new LevelDescription(11, 11, MazeType.Squared, 5, 5, 2, 4, 2),
+        new LevelDescription(8, 14, MazeType.Hex, 5, 5, 2, 4, 2),
+        new LevelDescription(9, 18, MazeType.Hex, 6, 6, 2, 4, 1),
     };
 
     void Awake()
@@ -77,22 +83,63 @@ public class GameManagerBehavior : MonoBehaviour, I_PlayerInteractions
 
     void Start()
     {
-        HandleMazeGeneration();
+        isCustomLevel = RunDataContainer.Instance != null && RunDataContainer.Instance.isCustomLevel;
+        if (isCustomLevel)
+        {
+            HandleCustomMazeGeneration();
+            avaiableTime = 200f;
+        }
+        else
+        {
+            HandleMazeGeneration();
+            avaiableTime = 500f;
+        }
         startedTime = Time.time;
+        Cursor.visible = false;
+
     }
 
     void Update()
     {
         float elapsedTime = Time.time - startedTime;
-        if (elapsedTime > avaiableTime)
+        if (elapsedTime > avaiableTime && !isLevelEnded)
         {
+            isLevelEnded = true;
             hudMessage.ShowMessage("Tempo scaduto!\nHai collezionato " + numTesoriRaccolti + " tesori.\nTorni al menu principale.");
             Invoke("GoBackToMainMenu", 5f);
         }
-        else
+        else if (!isLevelEnded)
         {
             hudMessage.UpdateTimeMessage("Rimangono: " + Mathf.FloorToInt(avaiableTime - elapsedTime) + " s");
         }
+    }
+
+    void HandleCustomMazeGeneration()
+    {
+        Debug.Log("Generating custom level");
+        int size = RunDataContainer.Instance.mazeSize;
+        
+        int width = (RunDataContainer.Instance.mazeType == MazeType.Squared ? size : (int)(size*0.6f));
+
+        mazeGenerator.GenerateInstant(width, size, MazeGenAlgorithm.RecursiveBacktracking, RunDataContainer.Instance.mazeType);
+
+        int area = size*width;
+
+        float bonusesQuantity = RunDataContainer.Instance.mazeBonus/100f;
+
+        int bonusFactor = (int) (bonusesQuantity*area/7f); //semplice calcolo per avere un numero sensato di bonus non spropositato
+
+        playerObject.transform.position = mazeGenerator.FindTileGameObject(mazeGenerator.tiles[0, 0]).transform.position + new Vector3(0, 1, 0);
+
+        List<TileLogicalInstance> endTiles = mazeGenerator.GetEndTiles();
+        endTile = endTiles[Random.Range(0, endTiles.Count)];
+
+        GameObject endLevelGameObject = Instantiate(EndLevelPrefab, mazeGenerator.FindTileGameObject(endTile).transform.position + new Vector3(0, 0f, 0), Quaternion.identity);
+        endLevelGameObject.GetComponentInChildren<BaseObjectBehavior>().playerInteractions = this;
+        objects.Add(endTile, endLevelGameObject);
+
+        SpawnObjects(bonusFactor, bonusFactor, bonusFactor, bonusFactor, bonusFactor);
+
     }
 
     void HandleMazeGeneration()
@@ -105,63 +152,77 @@ public class GameManagerBehavior : MonoBehaviour, I_PlayerInteractions
                 Destroy(obj);
         }
 
+        objects.Clear();
+
         Debug.Log("Generating level " + currentLevel);
-        mazeGenerator.GenerateAnimatedAsynch(levels[currentLevel].width, levels[currentLevel].height, MazeGenAlgorithm.RecursiveBacktracking, levels[currentLevel].mazeType);
+        mazeGenerator.GenerateInstant(levels[currentLevel].width, levels[currentLevel].height, MazeGenAlgorithm.RecursiveBacktracking, levels[currentLevel].mazeType);
 
         playerObject.transform.position = mazeGenerator.FindTileGameObject(mazeGenerator.tiles[0, 0]).transform.position + new Vector3(0, 1, 0);
 
-        endTile = mazeGenerator.GetEndTile();
+        List<TileLogicalInstance> endTiles = mazeGenerator.GetEndTiles();
+        endTile = endTiles[Random.Range(0, endTiles.Count)];
+
         GameObject endLevelGameObject = Instantiate(EndLevelPrefab, mazeGenerator.FindTileGameObject(endTile).transform.position + new Vector3(0, 0f, 0), Quaternion.identity);
-        endLevelGameObject.GetComponentInChildren<EndLevelBehavior>().playerInteractions = this;
+        endLevelGameObject.GetComponentInChildren<BaseObjectBehavior>().playerInteractions = this;
         objects.Add(endTile, endLevelGameObject);
 
-        for (int i = 0; i < levels[currentLevel].numCollectibles; i++)
+        SpawnObjects(levels[currentLevel].numHideWalls,
+                    levels[currentLevel].numCollectibles,
+                    levels[currentLevel].numLaunchPads,
+                    levels[currentLevel].numArrows,
+                    levels[currentLevel].numTimeBonuses
+        );
+    }
+
+    void SpawnObjects(int numHideWalls, int numCollectibles, int numLaunchPads, int numArrows, int numTimeBonuses)
+    {
+        for (int i = 0; i < numHideWalls; i++)
+        {
+            TileLogicalInstance tile = GetRandomEmptyTile(true, 1);
+            GameObject go = Instantiate(HideWallPrefab, mazeGenerator.FindTileGameObject(tile).transform.position + new Vector3(0, 0f, 0), Quaternion.identity);
+            go.GetComponentInChildren<BaseObjectBehavior>().playerInteractions = this;
+            objects.Add(tile, go);
+        }
+
+        for (int i = 0; i < numCollectibles; i++)
         {
             TileLogicalInstance tile = GetRandomEmptyTile();
             GameObject go = Instantiate(CollectiblePrefab, mazeGenerator.FindTileGameObject(tile).transform.position + new Vector3(0, 0f, 0), Quaternion.identity);
-            go.GetComponentInChildren<TreasureBehavior>().playerInteractions = this;
+            go.GetComponentInChildren<BaseObjectBehavior>().playerInteractions = this;
             objects.Add(tile, go);
         }
 
-        for (int i = 0; i < levels[currentLevel].numHideWalls; i++)
-        {
-            TileLogicalInstance tile = GetRandomEmptyTile(true, true);
-            GameObject go = Instantiate(HideWallPrefab, mazeGenerator.FindTileGameObject(tile).transform.position + new Vector3(0, 0f, 0), Quaternion.identity);
-            go.GetComponentInChildren<HideWallBehavior>().playerInteractions = this;
-            objects.Add(tile, go);
-        }
-
-        for (int i = 0; i < levels[currentLevel].numLaunchPads; i++)
+        for (int i = 0; i < numLaunchPads; i++)
         {
             TileLogicalInstance tile = GetRandomEmptyTile();
             GameObject go = Instantiate(LaunchPadPrefab, mazeGenerator.FindTileGameObject(tile).transform.position + new Vector3(0, 0f, 0), Quaternion.identity);
             objects.Add(tile, go);
         }
 
-        for (int i = 0; i < levels[currentLevel].numArrows; i++)
+        for (int i = 0; i < numArrows; i++)
         {
             TileLogicalInstance tile = GetRandomEmptyTile();
             GameObject go = Instantiate(ArrowPrefab, mazeGenerator.FindTileGameObject(tile).transform.position + new Vector3(0, 0f, 0), Quaternion.identity);
-            go.GetComponentInChildren<ArrowBehavior>().playerInteractions = this;
+            go.GetComponentInChildren<BaseObjectBehavior>().playerInteractions = this;
             objects.Add(tile, go);
         }
 
-        for (int i = 0; i < levels[currentLevel].numTimeBonuses; i++)
+        for (int i = 0; i < numTimeBonuses; i++)
         {
             TileLogicalInstance tile = GetRandomEmptyTile();
             GameObject go = Instantiate(TimeBonusPrefab, mazeGenerator.FindTileGameObject(tile).transform.position + new Vector3(0, 0f, 0), Quaternion.identity);
-            go.GetComponentInChildren<ClockBehavior>().playerInteractions = this;
+            go.GetComponentInChildren<BaseObjectBehavior>().playerInteractions = this;
             objects.Add(tile, go);
         }
     }
 
-    public TileLogicalInstance GetRandomEmptyTile(bool avoidStart = true, bool avoidEdges = false)
+    public TileLogicalInstance GetRandomEmptyTile(bool avoidStart = true, int avoidEdgesNumTiles = 0)
     {
         TileLogicalInstance tile = null;
         do
         {
             tile = mazeGenerator.GetRandomTile();
-        } while (objects.ContainsKey(tile) || (avoidStart &&tile.coord.x == 0 && tile.coord.y == 0) || (avoidEdges && (tile.coord.x == 0 || tile.coord.y == 0 || tile.coord.x == mazeGenerator.size.x - 1 || tile.coord.y == mazeGenerator.size.y - 1)));
+        } while (objects.ContainsKey(tile) || (avoidStart &&tile.coord.x == 0 && tile.coord.y == 0) || (tile.coord.x < avoidEdgesNumTiles || tile.coord.y < avoidEdgesNumTiles || tile.coord.x >= mazeGenerator.size.x - avoidEdgesNumTiles || tile.coord.y >= mazeGenerator.size.y - avoidEdgesNumTiles));
 
         return tile;
     }
@@ -182,15 +243,23 @@ public class GameManagerBehavior : MonoBehaviour, I_PlayerInteractions
 
     public void EndLevelInteraction(GameObject other)
     {
-        if (currentLevel < maxLevel - 1)
+        if (currentLevel < maxLevel - 1  && !isCustomLevel)
         {
             HandleMazeGeneration();
 
             hudMessage.ShowMessage("Congratulazioni! Sei ora al livello " + (currentLevel + 1));
+            Debug.Log("Passed to level " + (currentLevel + 1));
             bonusAudioSource.PlayOneShot(bonusCollectSound);
         }
         else
         {
+
+            if (isLevelEnded)
+                return;
+
+            isLevelEnded = true;
+
+
             hudMessage.ShowMessage("Congratulazioni!\nHai vinto il gioco!\nHai collezionato " + numTesoriRaccolti + " tesori.");
             bonusAudioSource.PlayOneShot(bonusCollectSound);
 
@@ -212,14 +281,27 @@ public class GameManagerBehavior : MonoBehaviour, I_PlayerInteractions
         List<int> activeWalls = new List<int>();
         for (int i = 0; i < tile.WallActivate.Length; i++)
         {
+            try
+            {
+                mazeGenerator.GetNeighborTile(tile, i);
+            }
+            catch
+            {
+                continue;
+            }
             if (tile.WallActivate[i])
                 activeWalls.Add(i);
         }
+
+        if (activeWalls.Count == 0)
+            return;
+        
         int wallIndex = activeWalls[Random.Range(0, activeWalls.Count)];
 
         mazeGenerator.ClearWallsBetween(tile, mazeGenerator.GetNeighborTile(tile, wallIndex)); //entrambi
 
         Debug.Log("Cleared wall " + wallIndex + " between " + tile.coord + " and " + mazeGenerator.GetNeighborTile(tile, wallIndex).coord);
+        //Debug.Log(string.Join(",", tile.WallActivate));
 
         hudMessage.ShowMessage("Muro svanito!");
         bonusAudioSource.PlayOneShot(bonusCollectSound);

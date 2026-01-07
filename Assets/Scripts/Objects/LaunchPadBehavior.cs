@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class LaunchPadBehavior : MonoBehaviour
 {
-    public float jumpForce = 10f; //Forza (N) del salto
+    public float jumpForce = 3f; //Forza (N) del salto
 
     private void OnTriggerEnter(Collider other)
     {

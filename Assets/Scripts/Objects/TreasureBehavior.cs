@@ -1,10 +1,8 @@
 using UnityEngine;
 
-public class TreasureBehavior : MonoBehaviour
+public class TreasureBehavior : BaseObjectBehavior
 {
-    public I_PlayerInteractions playerInteractions;
-
-    private void OnTriggerEnter(Collider other)
+    protected override void OnTriggerEnter(Collider other)
     {
         playerInteractions.CollectibleTreasureInteraction(transform.parent.parent.gameObject);
         Destroy(transform.parent.parent.gameObject);

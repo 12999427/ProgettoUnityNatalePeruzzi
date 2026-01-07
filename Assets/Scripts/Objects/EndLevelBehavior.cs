@@ -1,11 +1,9 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class EndLevelBehavior : MonoBehaviour
+public class EndLevelBehavior : BaseObjectBehavior
 {
-    public I_PlayerInteractions playerInteractions;
-
-    private void OnTriggerEnter(Collider other)
+    protected override void OnTriggerEnter(Collider other)
     {
         playerInteractions.EndLevelInteraction(transform.parent.parent.gameObject);
         Destroy(transform.parent.parent.gameObject);

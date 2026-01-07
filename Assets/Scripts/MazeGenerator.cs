@@ -10,8 +10,10 @@ using UnityEngine.Audio;
 public enum MazeGenAlgorithm
 {
     RecursiveBacktracking,
+    /*
     RandomizedDepthFirstSearch,
     HuntAndKill
+    */
     //magari altri in futuro
 }
 
@@ -42,12 +44,12 @@ public class MazeGenerator : MonoBehaviour
         }
     }
     public TileLogicalInstance[,] tiles;
-    protected MazeGenAlgorithm algorithm;
-    protected MazeType type;
+    private MazeGenAlgorithm algorithm;
+    public MazeType type;
     public Vector2Int size;
-    protected GameObject[,] tilesGrid;
+    private GameObject[,] tilesGrid;
 
-    public IEnumerator Generate(int width, int height, MazeGenAlgorithm alg, MazeType type, bool anim=false)
+    public void GenerateInstant(int width, int height, MazeGenAlgorithm alg, MazeType type)
     {   
         foreach (Transform child in transform)
         {
@@ -62,17 +64,17 @@ public class MazeGenerator : MonoBehaviour
 
         SpawnAndInstantiate(width, height, type);
 
-        yield return RecursiveGenerationStep(tiles[0, 0], null, anim);
+        RecursiveGenerationStep(tiles[0, 0], null);
 
     }
 
-    protected void VisitTile(TileLogicalInstance tile)
+    private void VisitTile(TileLogicalInstance tile)
     {
         tile.Visit();
         FindTileGameObject(tile).GetComponent<MazeTileBehavior>().Visit();
     }
 
-    protected IEnumerator RecursiveGenerationStep (TileLogicalInstance current, TileLogicalInstance prev, bool anim=false)
+    private void RecursiveGenerationStep (TileLogicalInstance current, TileLogicalInstance prev)
     {
         if (algorithm == MazeGenAlgorithm.RecursiveBacktracking)
         {
@@ -80,16 +82,13 @@ public class MazeGenerator : MonoBehaviour
 
             ClearWallsBetween(current, prev);
 
-            if (anim)
-                yield return new WaitForSeconds(0.05f);
-
             TileLogicalInstance next;
 
             do
             {
                 next = GetRandomNearUnvisitedCell(current);
                 if (next != null)
-                    yield return RecursiveGenerationStep(next, current);
+                    RecursiveGenerationStep(next, current);
 
             } while (next != null);
         }
@@ -97,20 +96,7 @@ public class MazeGenerator : MonoBehaviour
         //fine
     }
 
-    public void GenerateInstant(int width, int height, MazeGenAlgorithm alg, MazeType type)
-    {
-        IEnumerator gen = Generate(width, height, alg, type, false); //Crea una instnza della coroutine
-
-        // ripete finché non finisce
-        while (gen.MoveNext()) { } //è bloccante
-    }
-
-    public void GenerateAnimatedAsynch(int width, int height, MazeGenAlgorithm alg, MazeType type)
-    {
-        StartCoroutine(Generate(width, height, alg, type, true));
-    }
-
-    protected void SpawnAndInstantiate (int width, int height, MazeType type)
+    private void SpawnAndInstantiate (int width, int height, MazeType type)
     {
         switch (type)
         {
@@ -235,13 +221,13 @@ public class MazeGenerator : MonoBehaviour
         }
     }
 
-    protected void DeactivateWall(TileLogicalInstance tile, int num)
+    private void DeactivateWall(TileLogicalInstance tile, int num)
     {
         tile.SetWallActive(num, false);
         FindTileGameObject(tile).GetComponent<MazeTileBehavior>().SetWallActive(num, false);
     }
 
-    protected IEnumerable<TileLogicalInstance> GetNearCells (TileLogicalInstance current)
+    private IEnumerable<TileLogicalInstance> GetNearCells (TileLogicalInstance current)
     {
         switch (type)
         {
@@ -294,7 +280,7 @@ public class MazeGenerator : MonoBehaviour
         }
     }
 
-    protected IEnumerable<TileLogicalInstance> GetNearUnvisitedCells (TileLogicalInstance current)
+    private IEnumerable<TileLogicalInstance> GetNearUnvisitedCells (TileLogicalInstance current)
     {
         foreach (var c in GetNearCells(current))
         {
@@ -303,7 +289,7 @@ public class MazeGenerator : MonoBehaviour
         }
     }
 
-    protected TileLogicalInstance GetRandomNearUnvisitedCell (TileLogicalInstance current)
+    private TileLogicalInstance GetRandomNearUnvisitedCell (TileLogicalInstance current)
     {
         TileLogicalInstance[] array = GetNearUnvisitedCells(current).ToArray();
 
@@ -324,20 +310,51 @@ public class MazeGenerator : MonoBehaviour
         return tiles[0, 0];
     }
 
-    public TileLogicalInstance GetEndTile()
+    public List<TileLogicalInstance> GetEndTiles()
     {
         List<TileLogicalInstance> borderTiles = new List<TileLogicalInstance>();
-        for (int x = (int)(size.x*0.4f); x < size.x; x++)
+        for (int x = 0; x < size.x; x++)
         {
             borderTiles.Add(tiles[x, 0]);
             borderTiles.Add(tiles[x, size.y - 1]);
         }
         for (int y = 0; y < size.y; y++)
         {
+            borderTiles.Add(tiles[0, y]);
             borderTiles.Add(tiles[size.x - 1, y]);
         }
 
-        return borderTiles[Random.Range(0, borderTiles.Count)];
+        for (int i = 0; i<borderTiles.Count;)
+        {
+            if (howManyOccurrences(borderTiles[i].WallActivate, false) != 1 || borderTiles[i] == tiles[0,0])
+            {
+                borderTiles.RemoveAt(i);
+            }
+            else
+            {
+                i++;
+            }
+        }
+
+        if (borderTiles.Count == 0)
+        {
+            //Debug.LogWarning("Nessuna cella di uscita trovata!");
+            borderTiles.Add(tiles[size.x - 1, size.y - 1]);
+            //anche se è estremamente improbabile che non ci sia nessuna cella sul bordo con una sola entrata
+        }
+
+        return borderTiles;
+    }
+
+    private int howManyOccurrences(bool[] array, bool value)
+    {
+        int count = 0;
+        foreach (var item in array)
+        {
+            if (item == value)
+                count++;
+        }
+        return count;
     }
 
     public TileLogicalInstance GetRandomTile()
@@ -357,10 +374,10 @@ public class MazeGenerator : MonoBehaviour
         {
             switch (wallIndex)
             {
-                case 0: return tiles[x + 1, y]; // muro destra
-                case 1: return tiles[x, y - 1]; // muro sotto
-                case 2: return tiles[x - 1, y]; // muro sinistra
-                case 3: return tiles[x, y + 1]; // muro sopra
+                case 2: return tiles[x + 1, y]; // muro destra
+                case 3: return tiles[x, y - 1]; // muro sotto
+                case 0: return tiles[x - 1, y]; // muro sinistra
+                case 1: return tiles[x, y + 1]; // muro sopra
                 default: return null;
             }
         }
@@ -368,12 +385,12 @@ public class MazeGenerator : MonoBehaviour
         {
             switch (wallIndex)
             {
-                case 0: return tiles[x, y - 2];       // sopra
-                case 1: return tiles[x + (oddRow? 1:0), y - 1]; // sopra-dx
-                case 2: return tiles[x + (oddRow? 1:0), y + 1]; // sotto-dx
-                case 3: return tiles[x, y + 2];       // sotto
-                case 4: return tiles[x - (oddRow? 0:1), y + 1]; // sotto-sx
-                case 5: return tiles[x - (oddRow? 0:1), y - 1]; // sopra-sx
+                case 0: return tiles[x, y - 2];       // sotto
+                case 2: return tiles[x + (oddRow? 1:0), y + 1]; // sopra-dx
+                case 1: return tiles[x + (oddRow? 1:0), y - 1]; // sotto-dx
+                case 3: return tiles[x, y + 2];       // sopra
+                case 5: return tiles[x - (oddRow? 0:1), y - 1]; // sotto-sx
+                case 4: return tiles[x - (oddRow? 0:1), y + 1]; // sopra-sx
                 default: return null;
             }
         }

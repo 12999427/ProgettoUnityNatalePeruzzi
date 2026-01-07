@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 321903907727584787}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.315, z: 0}
+  m_LocalPosition: {x: 0, y: 0.57, z: 0}
   m_LocalScale: {x: 0.24, y: 0.24, z: 0.24}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -118,7 +118,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0, y: 0, z: 0}
+  m_Size: {x: 5, y: 5, z: 5}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &6826450578178713685
 MonoBehaviour:
@@ -134,7 +134,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
   m_IsGlobal: 0
   priority: 0
-  blendDistance: 4.24
+  blendDistance: 3.88
   weight: 0.119
   sharedProfile: {fileID: 11400000, guid: 159ef34629eb94b028d1b7d882b09520, type: 2}
 --- !u!114 &377550895431340832
@@ -193,6 +193,7 @@ GameObject:
   - component: {fileID: 719317315660932521}
   - component: {fileID: 3123246415582386624}
   - component: {fileID: 8023391571886185712}
+  - component: {fileID: 7146352399504484341}
   m_Layer: 0
   m_Name: Sphere
   m_TagString: Untagged
@@ -293,3 +294,18 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7146352399504484341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8833253965797744775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5cca775bee840418d816ec505a707ba0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FloatingObject
+  floatAmplitude: 0.2
+  floatFrequency: 1
+  rotationSpeed: {x: 0, y: 30, z: 0}
